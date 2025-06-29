@@ -7,12 +7,10 @@ edition = "2024"
 pallas = "0.32.1"
 pallas-traverse = "0.32.1"
 anyhow = "1.0.98"
-combine = "4.6.7"
 futures = "0.3.31"
 redbit = { git = "https://github.com/pragmaxim-com/redbit" }
 # redbit = { path = "../../redbit/redbit", version = "0.1.0" }
-chain-syncer = { path = "../chain-syncer", version = "0.1.0" }
-min-batch = { git = "https://github.com/pragmaxim-com/min-batch.rs" }
+chain-syncer = { git = "https://github.com/pragmaxim-com/chain-syncer" }
 config = "0.15.11"
 redb = "2.6.0"
 tokio-stream = { version = "0.1.17", features = ["sync"] }
