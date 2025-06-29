@@ -1,0 +1,27 @@
+[package]
+name = "cardano-explorer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pallas = "0.32.1"
+pallas-traverse = "0.32.1"
+anyhow = "1.0.98"
+combine = "4.6.7"
+futures = "0.3.31"
+redbit = { git = "https://github.com/pragmaxim-com/redbit" }
+# redbit = { path = "../../redbit/redbit", version = "0.1.0" }
+chain-syncer = { path = "../chain-syncer", version = "0.1.0" }
+min-batch = { git = "https://github.com/pragmaxim-com/min-batch.rs" }
+config = "0.15.11"
+redb = "2.6.0"
+tokio-stream = { version = "0.1.17", features = ["sync"] }
+axum = {  version = "0.8.4", features = ["default", "macros"] }
+serde = { version = "1.0.219", features = ["derive"] }
+tokio = { version = "1.45.1", features = ["full"] }
+dotenv = "0.15.0"
+chrono = "0.4.38"
+thiserror = "2.0.12"
+async-trait = "0.1.81"
+hex = "0.4.3"
+num_enum = "0.7.3"
