@@ -24,7 +24,7 @@ use std::sync::Arc;
 async fn maybe_run_server(http_conf: &HttpSettings, db: Arc<Database>) -> () {
     if http_conf.enable {
         info!("Starting http server at {}", http_conf.bind_address);
-        serve(RequestState { db: Arc::clone(&db) }, http_conf.bind_address).await
+        serve(RequestState { db: Arc::clone(&db) }, http_conf.bind_address, None).await
     } else {
         ready(()).await
     }
