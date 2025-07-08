@@ -3,7 +3,6 @@ use chrono::DateTime;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use pallas::network::miniprotocols::{blockfetch, chainsync, localstate};
 pub use redbit::*;
-use std::error::Error;
 use std::fmt;
 
 #[derive(Clone, Copy, Debug, IntoPrimitive, PartialEq, TryFromPrimitive, )]
