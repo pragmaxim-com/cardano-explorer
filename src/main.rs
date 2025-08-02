@@ -52,7 +52,8 @@ async fn main() -> Result<()> {
     let app_config = AppConfig::new("config/settings")?;
     let cardano_config = CardanoConfig::new("config/cardano")?;
     let db_path: String = format!("{}/{}/{}", app_config.indexer.db_path, "main", "cardano");
-    let db = Arc::new(storage::get_db(env::home_dir().unwrap().join(&db_path))?);
+    let full_db_path = env::home_dir().unwrap().join(&db_path);
+    let db = Arc::new(storage::get_db(full_db_path)?);
 
     let block_provider: Arc<dyn BlockProvider<CBOR, Block>> = Arc::new(CardanoBlockProvider::new(&cardano_config).await);
     let block_persistence: Arc<dyn BlockPersistence<Block>> = Arc::new(CardanoBlockPersistence { db: Arc::clone(&db) });

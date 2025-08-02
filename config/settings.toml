@@ -7,4 +7,4 @@ processing_parallelism = "mild" # low / mild / high
 
 [http]
 enable = true
-bind_address = "127.0.0.1:3031"
+bind_address = "127.0.0.1:3032"
