@@ -1,2 +1,2 @@
 api_host = "localhost:3001"
-socket_path = "/var/lib/cardano-node/db/node.socket"
+socket_path = "~/.cardano/db/node.socket"

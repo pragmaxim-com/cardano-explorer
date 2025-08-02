@@ -27,6 +27,7 @@ nohup ./bin/cardano-node run \
     --socket-path ~/.cardano/db/node.socket \  
     --host-addr 0.0.0.0 \  
     --port 3001 &
+./bin/cardano-cli query tip --mainnet --socket-path ~/.cardano/db/node.socket
 ```
 Then :
 ```
