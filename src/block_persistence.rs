@@ -1,4 +1,4 @@
-use crate::model::{Block, BlockHash, BlockHeader, ExplorerError, InputRef, Transaction, TransactionPointer};
+use crate::model::{Block, BlockHash, BlockHeader, BlockPointer, Height, InputRef, Transaction, TransactionPointer};
 use chain_syncer::api::*;
 use redbit::redb::ReadTransaction;
 use redbit::*;
@@ -12,11 +12,21 @@ impl CardanoBlockPersistence {
     fn populate_inputs(read_tx: &ReadTransaction, block: &mut Block) -> Result<(), ChainSyncError> {
         for tx in &mut block.transactions {
             for transient_input in tx.transient_inputs.iter_mut() {
-                let tx_pointers = Transaction::get_ids_by_hash(read_tx, &transient_input.tx_hash)?;
+                let tx_pointers =
+                    Transaction::get_ids_by_hash(read_tx, &transient_input.tx_hash)?;
 
-                let tx_pointer =
-                    tx_pointers.first().ok_or_else(|| ExplorerError::Custom(format!("Tx {} must be on chain", &transient_input.tx_hash.encode())))?;
-                tx.inputs.push(InputRef { id: TransactionPointer::from_parent(tx_pointer.clone(), transient_input.index as u16) });
+                match tx_pointers.first() {
+                    Some(tx_pointer) => {
+                        tx.inputs.push(InputRef {
+                            id: TransactionPointer::from_parent(tx_pointer.clone(), transient_input.index as u16),
+                        });
+                    }
+                    None => {
+                        tx.inputs.push(InputRef {
+                            id: TransactionPointer::from_parent(BlockPointer::from_parent(Height(0), 0), 0)
+                        })
+                    }
+                }
             }
         }
         Ok(())

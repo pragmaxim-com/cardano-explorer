@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-pallas = "0.32.1"
-pallas-traverse = "0.32.1"
+pallas = "0.33.0"
+pallas-traverse = "0.33.0"
 anyhow = "1.0.98"
 futures = "0.3.31"
 redbit = { git = "https://github.com/pragmaxim-com/redbit" }
