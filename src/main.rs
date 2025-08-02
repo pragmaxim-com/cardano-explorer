@@ -1,3 +1,6 @@
+#![feature(test)]
+extern crate test;
+
 mod block_persistence;
 mod block_provider;
 mod cardano_client;

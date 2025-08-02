@@ -38,7 +38,7 @@ impl CardanoBlockProvider {
             .collect()
     }
 
-    fn process_outputs(&self, outs: &[MultiEraOutput<'_>], tx_pointer: TxPointer) -> (BoxWeight, Vec<Utxo>) {
+    fn process_outputs(&self, outs: &[MultiEraOutput<'_>], tx_pointer: BlockPointer) -> (BoxWeight, Vec<Utxo>) {
         let mut result_outs = Vec::with_capacity(outs.len());
         let mut asset_count = 0;
         let mut ctx = ();
@@ -50,7 +50,7 @@ impl CardanoBlockProvider {
                 h.encode(&mut encoder, &mut ctx).unwrap();
                 buffer
             });
-            let utxo_pointer = UtxoPointer::from_parent(tx_pointer.clone(), out_index as u16);
+            let utxo_pointer = TransactionPointer::from_parent(tx_pointer.clone(), out_index as u16);
 
             let mut result_assets = Vec::with_capacity(out.value().assets().iter().map(|p| p.assets().len()).sum());
 
@@ -59,7 +59,7 @@ impl CardanoBlockProvider {
 
             for policy_assets in out.value().assets() {
                 // clone the policy‐id bytes once
-                let pid_bytes = policy_assets.policy().to_vec();
+                let pid_bytes: [u8; 28] = policy_assets.policy().as_ref().try_into().unwrap();
 
                 for asset in policy_assets.assets() {
                     let any_coin = asset.any_coin();
@@ -70,7 +70,7 @@ impl CardanoBlockProvider {
                     };
 
                     result_assets.push(Asset {
-                        id: AssetPointer::from_parent(utxo_pointer.clone(), idx),
+                        id: UtxoPointer::from_parent(utxo_pointer.clone(), idx),
                         amount: any_coin.abs() as u64,
                         name: AssetName(asset.name().to_vec()),
                         policy_id: PolicyId(pid_bytes.clone()),
@@ -103,7 +103,7 @@ impl BlockProvider<CBOR, Block> for CardanoBlockProvider {
         let prev_h = b.header().previous_hash().unwrap_or(pallas::crypto::hash::Hash::new([0u8; 32]));
         let prev_hash: [u8; 32] = *prev_h;
         let header = BlockHeader {
-            id: BlockHeight(b.header().number() as u32),
+            id: Height(b.header().number() as u32),
             timestamp: BlockTimestamp(b.header().slot() as u32 + GENESIS_START_TIME),
             hash: BlockHash(hash),
             prev_hash: BlockHash(prev_hash),
@@ -115,7 +115,7 @@ impl BlockProvider<CBOR, Block> for CardanoBlockProvider {
 
         for (tx_index, tx) in txs.iter().enumerate() {
             let tx_hash: [u8; 32] = *tx.hash();
-            let tx_id = TxPointer::from_parent(header.id.clone(), tx_index as u16);
+            let tx_id = BlockPointer::from_parent(header.id.clone(), tx_index as u16);
             let inputs = self.process_inputs(&tx.inputs());
             let (box_weight, outputs) = self.process_outputs(&tx.outputs().to_vec(), tx_id.clone()); //TODO perf check
             block_weight += box_weight;

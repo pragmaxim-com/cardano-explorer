@@ -3,7 +3,10 @@
 Cardano explorer on top of [redbit](https://github.com/pragmaxim-com/redbit) and [chain-syncer](https://github.com/pragmaxim-com/chain-syncer)
 
 It uses tiny `block_height/tx_index/utxo_index/[asset_index]` dictionary pointers to big hashes, ie. not a single hash is duplicated,
-which allows for much better space efficiency and for ~ `6 000 - 12 000 Utxos+Assets / second` syncing speed with local node and an old SSD.
+which allows for much better space efficiency and syncing speed with local node and an SSD.
+
+> Note that indexing speed in logs is the *average*, the first ~ 100k blocks with just one Tx are indexed at ~ `300 Inputs+outputs+assets / second`.
+> Indexing is optimized for the big blocks where the throughput reaches ~ `6 000 Inputs+outputs+assets / second`.
 
 Chain tip is "eventually consistent" through fork competition, ie. forks get settled eventually and superseded forks are deleted from DB.
 
@@ -15,8 +18,18 @@ sudo apt-get install rustup
 
 ### Usage
 
+Run cardano node locally, api at port 3001 can be change in `config/cardano.toml`, for example :
 ```
-# Cardano node is expected to run locally at port 1337, set socket_path at config/settings.toml
+nohup ./bin/cardano-node run \
+    --topology /opt/cardano/share/mainnet/topology.json \  
+    --config /opt/cardano/share/mainnet/config.json \
+    --database-path ~/.cardano/db \  
+    --socket-path ~/.cardano/db/node.socket \  
+    --host-addr 0.0.0.0 \  
+    --port 3001 &
+```
+Then :
+```
 cargo run
 ```
 

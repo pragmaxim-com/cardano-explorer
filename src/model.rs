@@ -13,36 +13,20 @@ pub enum AssetType {
     Burn = 2,
 }
 
+#[root_key] pub struct Height(pub u32);
 
-#[column]
-pub struct AssetName(pub Vec<u8>);
-#[column]
-pub struct AssetAction(pub u8);
-#[column]
-pub struct PolicyId(pub Vec<u8>);
+#[pointer_key(u16)] pub struct BlockPointer(Height);
+#[pointer_key(u16)] pub struct TransactionPointer(BlockPointer);
+#[pointer_key(u8)] pub struct UtxoPointer(TransactionPointer);
 
-#[root_key]
-pub struct BlockHeight(pub u32);
+#[column("hex")] pub struct BlockHash(pub [u8; 32]);
+#[column("hex")] pub struct TxHash(pub [u8; 32]);
+#[column("hex")] pub struct ScriptHash(pub Vec<u8>);
+#[column("hex")] pub struct PolicyId(pub [u8; 28]);
+#[column("utf-8")] pub struct AssetName(pub Vec<u8>);
+#[column("cardano_addr")] pub struct Address(pub Vec<u8>);
 
-#[pointer_key(u16)]
-pub struct TxPointer(BlockHeight);
-#[pointer_key(u16)]
-pub struct UtxoPointer(TxPointer);
-#[pointer_key(u16)]
-pub struct InputPointer(TxPointer);
-#[pointer_key(u8)]
-pub struct AssetPointer(UtxoPointer);
-
-#[column]
-pub struct Hash(pub String);
-#[column]
-pub struct BlockHash(pub [u8; 32]);
-#[column]
-pub struct TxHash(pub [u8; 32]);
-#[column]
-pub struct Address(pub Vec<u8>);
-#[column]
-pub struct ScriptHash(pub Vec<u8>);
+#[column] pub struct AssetAction(pub u8);
 
 #[column]
 pub struct TempInputRef {
@@ -64,7 +48,7 @@ impl fmt::Display for BlockTimestamp {
 #[entity]
 pub struct Block {
     #[pk]
-    pub id: BlockHeight,
+    pub id: Height,
     pub header: BlockHeader,
     pub transactions: Vec<Transaction>,
     #[column(transient)]
@@ -74,7 +58,7 @@ pub struct Block {
 #[entity]
 pub struct BlockHeader {
     #[fk(one2one)]
-    pub id: BlockHeight,
+    pub id: Height,
     #[column(index)]
     pub hash: BlockHash,
     #[column(index)]
@@ -86,7 +70,7 @@ pub struct BlockHeader {
 #[entity]
 pub struct Transaction {
     #[fk(one2many)]
-    pub id: TxPointer,
+    pub id: BlockPointer,
     #[column(index)]
     pub hash: TxHash,
     pub utxos: Vec<Utxo>,
@@ -98,10 +82,10 @@ pub struct Transaction {
 #[entity]
 pub struct Utxo {
     #[fk(one2many)]
-    pub id: UtxoPointer,
+    pub id: TransactionPointer,
     #[column]
     pub amount: u64,
-    #[column(index)]
+    #[column(dictionary)]
     pub address: Address,
     #[column]
     pub script_hash: ScriptHash,
@@ -111,10 +95,10 @@ pub struct Utxo {
 #[entity]
 pub struct Asset {
     #[fk(one2many, range)]
-    pub id: AssetPointer,
+    pub id: UtxoPointer,
     #[column]
     pub amount: u64,
-    #[column(index, dictionary)]
+    #[column(dictionary)]
     pub name: AssetName,
     #[column(dictionary)]
     pub policy_id: PolicyId,
@@ -125,7 +109,7 @@ pub struct Asset {
 #[entity]
 pub struct InputRef {
     #[fk(one2many)]
-    pub id: InputPointer,
+    pub id: TransactionPointer,
 }
 
 impl BlockHeaderLike for BlockHeader {

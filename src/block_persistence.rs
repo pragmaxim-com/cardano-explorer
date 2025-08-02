@@ -1,11 +1,11 @@
-use crate::model::{Block, BlockHash, BlockHeader, ExplorerError, InputPointer, InputRef, Transaction};
+use crate::model::{Block, BlockHash, BlockHeader, ExplorerError, InputRef, Transaction, TransactionPointer};
 use chain_syncer::api::*;
 use redbit::redb::ReadTransaction;
 use redbit::*;
 use std::sync::Arc;
 
 pub struct CardanoBlockPersistence {
-    pub db: Arc<redb::Database>,
+    pub db: Arc<Database>,
 }
 
 impl CardanoBlockPersistence {
@@ -16,7 +16,7 @@ impl CardanoBlockPersistence {
 
                 let tx_pointer =
                     tx_pointers.first().ok_or_else(|| ExplorerError::Custom(format!("Tx {} must be on chain", &transient_input.tx_hash.encode())))?;
-                tx.inputs.push(InputRef { id: InputPointer::from_parent(tx_pointer.clone(), transient_input.index as u16) });
+                tx.inputs.push(InputRef { id: TransactionPointer::from_parent(tx_pointer.clone(), transient_input.index as u16) });
             }
         }
         Ok(())
