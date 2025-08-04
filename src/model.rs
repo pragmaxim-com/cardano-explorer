@@ -24,7 +24,7 @@ pub enum AssetType {
 #[column("hex")] pub struct ScriptHash(pub Vec<u8>);
 #[column("hex")] pub struct PolicyId(pub [u8; 28]);
 #[column("utf-8")] pub struct AssetName(pub Vec<u8>);
-#[column("cardano_addr")] pub struct Address(pub Vec<u8>);
+#[column("crate::codec::BaseOrBech")] pub struct Address(pub Vec<u8>);
 
 #[column] pub struct AssetAction(pub u8);
 

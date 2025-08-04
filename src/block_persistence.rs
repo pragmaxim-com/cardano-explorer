@@ -48,15 +48,9 @@ impl BlockPersistence<Block> for CardanoBlockPersistence {
 
     fn store_blocks(&self, mut blocks: Vec<Block>) -> Result<(), ChainSyncError> {
         for block in &mut blocks {
-            {
-                let read_tx = self.db.begin_read()?;
-                Self::populate_inputs(&read_tx, block)?;
-            }
-            {
-                let write_ins = self.db.begin_write()?;
-                Block::store(&write_ins, block)?;
-                write_ins.commit()?;
-            }
+            let read_tx = self.db.begin_read()?;
+            Self::populate_inputs(&read_tx, block)?;
+            Block::store_and_commit(&self.db, block)?;
         }
         Ok(())
     }

@@ -7,6 +7,7 @@ mod cardano_client;
 mod config;
 mod model;
 mod storage;
+mod codec;
 
 use crate::block_persistence::CardanoBlockPersistence;
 use crate::block_provider::CardanoBlockProvider;
