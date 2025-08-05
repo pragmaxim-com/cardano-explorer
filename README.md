@@ -21,11 +21,11 @@ sudo apt-get install rustup
 Run cardano node locally, api at port 3001 can be change in `config/cardano.toml`, for example :
 ```
 nohup ./bin/cardano-node run \
-    --topology /opt/cardano/share/mainnet/topology.json \  
+    --topology /opt/cardano/share/mainnet/topology.json \
     --config /opt/cardano/share/mainnet/config.json \
-    --database-path ~/.cardano/db \  
-    --socket-path ~/.cardano/db/node.socket \  
-    --host-addr 0.0.0.0 \  
+    --database-path ~/.cardano/db \
+    --socket-path ~/.cardano/db/node.socket \
+    --host-addr 0.0.0.0 \
     --port 3001 &
 ./bin/cardano-cli query tip --mainnet --socket-path ~/.cardano/db/node.socket
 ```
