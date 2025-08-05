@@ -55,7 +55,7 @@ impl CardanoBlockProvider {
             let mut result_assets = Vec::with_capacity(out.value().assets().iter().map(|p| p.assets().len()).sum());
 
             // start your pointer index at 0
-            let mut idx: u8 = 0;
+            let mut idx: u16 = 0;
 
             for policy_assets in out.value().assets() {
                 // clone the policy‐id bytes once

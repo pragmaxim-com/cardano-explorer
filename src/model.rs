@@ -17,7 +17,7 @@ pub enum AssetType {
 
 #[pointer_key(u16)] pub struct BlockPointer(Height);
 #[pointer_key(u16)] pub struct TransactionPointer(BlockPointer);
-#[pointer_key(u8)] pub struct UtxoPointer(TransactionPointer);
+#[pointer_key(u16)] pub struct UtxoPointer(TransactionPointer);
 
 #[column("hex")] pub struct BlockHash(pub [u8; 32]);
 #[column("hex")] pub struct TxHash(pub [u8; 32]);
