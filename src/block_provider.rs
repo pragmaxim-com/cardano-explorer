@@ -2,7 +2,7 @@ use pallas::network::miniprotocols::Point;
 use pallas::network::miniprotocols::chainsync::NextResponse;
 use std::{pin::Pin, sync::Arc};
 use tokio::runtime::Runtime;
-
+use async_stream::stream;
 use super::cardano_client::{CBOR, CardanoClient};
 use crate::config::CardanoConfig;
 use crate::info;
@@ -14,19 +14,20 @@ use chain_syncer::monitor::BoxWeight;
 use futures::{Stream, StreamExt};
 use pallas::codec::minicbor::{Encode, Encoder};
 use pallas::ledger::traverse::{MultiEraBlock, MultiEraInput, MultiEraOutput};
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::ReceiverStream;
-
-pub static GENESIS_START_TIME: u32 = 1506203091;
+use pallas_traverse::wellknown::GenesisValues;
 
 pub struct CardanoBlockProvider {
     pub client: CardanoClient,
+    pub genesis: GenesisValues
 }
 
 impl CardanoBlockProvider {
     pub async fn new(cardano_config: &CardanoConfig) -> Self {
-        CardanoBlockProvider { client: CardanoClient::new(cardano_config).await }
+        let client = CardanoClient::new(cardano_config).await;
+        let genesis = GenesisValues::mainnet();
+        CardanoBlockProvider { client, genesis }
     }
+
     fn process_inputs(&self, ins: &[MultiEraInput<'_>]) -> Vec<TempInputRef> {
         // iter zipped with index
         ins.iter()
@@ -104,7 +105,8 @@ impl BlockProvider<CBOR, Block> for CardanoBlockProvider {
         let prev_hash: [u8; 32] = *prev_h;
         let header = BlockHeader {
             id: Height(b.header().number() as u32),
-            timestamp: BlockTimestamp(b.header().slot() as u32 + GENESIS_START_TIME),
+            timestamp: BlockTimestamp(b.wallclock(&self.genesis) as u32),
+            slot: Slot(b.slot() as u32),
             hash: BlockHash(hash),
             prev_hash: BlockHash(prev_hash),
         };
@@ -133,37 +135,32 @@ impl BlockProvider<CBOR, Block> for CardanoBlockProvider {
     }
 
     fn get_processed_block(&self, h: BlockHeader) -> Result<Block, ChainSyncError> {
-        let point = Point::new((h.timestamp.0 - GENESIS_START_TIME) as u64, h.hash.0.to_vec());
+        let point = Point::new(h.slot.0 as u64, h.hash.0.to_vec());
         let rt = Runtime::new().unwrap();
         let cbor = rt.block_on(self.client.get_block_by_point(point))?;
         self.process_block(&cbor)
     }
 
-    async fn stream(&self, _chain_tip_header: BlockHeader, last_header: Option<BlockHeader>) -> Pin<Box<dyn Stream<Item = CBOR> + Send + 'life0>> {
-        let last_point = last_header.clone().map_or(Point::Origin, |h| Point::new(h.timestamp.0 as u64, h.hash.0.to_vec()));
-
-        let (tx, rx) = mpsc::channel::<CBOR>(100);
+    fn stream(&self, _chain_tip: BlockHeader, last_header: Option<BlockHeader>) -> Pin<Box<dyn Stream<Item = CBOR> + Send + 'static>> {
         let node_client = Arc::clone(&self.client.node_client);
+        let last_point = last_header.as_ref().map_or(Point::Origin, |h| Point::new(h.slot.0 as u64, h.hash.0.to_vec()));
 
-        tokio::spawn(async move {
+        stream! {
+            // Hold the lock for the duration of the chain-sync session to avoid re-locking
             let (_, to) = node_client.lock().await.chainsync().find_intersect(vec![last_point]).await.unwrap();
+            info!("Indexing from {} to {}", last_header.as_ref().map(|h| h.id.0).unwrap_or(0), to.1);
 
-            info!("Indexing from {} to {}", last_header.map(|h| h.id.0).unwrap_or(0), to.1);
             loop {
                 match node_client.lock().await.chainsync().request_or_await_next().await.unwrap() {
                     NextResponse::RollForward(block_bytes, _) => {
-                        if tx.send(block_bytes.0).await.is_err() {
-                            break;
-                        }
+                        yield block_bytes.0;
                     }
-                    // Since we're just scraping data until we catch up, we don't need to handle rollbacks
-                    NextResponse::RollBackward(_, _) => {}
-                    // Await is returned once we've caught up, and we should let
-                    // the node notify us when there's a new block available
+                    NextResponse::RollBackward(_, _) => {
+                        continue;
+                    }
                     NextResponse::Await => break,
                 }
             }
-        });
-        ReceiverStream::new(rx).boxed()
+        }.boxed()
     }
 }

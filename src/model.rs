@@ -19,6 +19,7 @@ pub enum AssetType {
 #[pointer_key(u16)] pub struct TransactionPointer(BlockPointer);
 #[pointer_key(u16)] pub struct UtxoPointer(TransactionPointer);
 
+#[column] pub struct Slot(pub u32);
 #[column("hex")] pub struct BlockHash(pub [u8; 32]);
 #[column("hex")] pub struct TxHash(pub [u8; 32]);
 #[column("hex")] pub struct ScriptHash(pub Vec<u8>);
@@ -63,6 +64,8 @@ pub struct BlockHeader {
     pub hash: BlockHash,
     #[column(index)]
     pub prev_hash: BlockHash,
+    #[column(range)]
+    pub slot: Slot,
     #[column(range)]
     pub timestamp: BlockTimestamp,
 }

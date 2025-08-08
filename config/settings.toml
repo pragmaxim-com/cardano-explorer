@@ -1,5 +1,5 @@
 [indexer]
-db_path = "/tmp/chain-syncer"
+db_path = ".chain-syncer"
 enable = true
 min_batch_size = 1000           # Sum of : inputs + outputs + assets/tokens
 fetching_parallelism = "mild"   # low / mild / high

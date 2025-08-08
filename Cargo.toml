@@ -1,6 +1,6 @@
 [package]
 name = "cardano-explorer"
-version = "0.1.0"
+version = "1.0.1"
 edition = "2024"
 
 [dependencies]
@@ -8,9 +8,8 @@ pallas = "0.33.0"
 pallas-traverse = "0.33.0"
 anyhow = "1.0.98"
 futures = "0.3.31"
-redbit = { git = "https://github.com/pragmaxim-com/redbit" }
-# redbit = { path = "../../redbit/redbit", version = "0.1.0" }
-chain-syncer = { git = "https://github.com/pragmaxim-com/chain-syncer" }
+redbit = { git = "https://github.com/pragmaxim-com/redbit", tag = "v1.0.1" }
+chain-syncer = { git = "https://github.com/pragmaxim-com/chain-syncer", tag = "v1.0.1"}
 config = "0.15.11"
 redb = "2.6.0"
 tokio-stream = { version = "0.1.17", features = ["sync"] }
@@ -29,3 +28,5 @@ num_enum = "0.7.3"
 bincode = "2.0.1"
 serde_with = {  version = "3.14.0", features = ["hex", "chrono_0_4", "base64", "time_0_3"] }
 tower-http = { version = "0.6.6", features = ["cors"] }
+async-stream = "0.3.6"
+futures-core = "0.3.31"
