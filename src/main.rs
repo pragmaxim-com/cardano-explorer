@@ -24,25 +24,26 @@ use redbit::redb::Database;
 use redbit::*;
 use std::env;
 use std::sync::Arc;
+use tokio::sync::watch;
 use tower_http::cors;
 
-async fn maybe_run_server(http_conf: &HttpSettings, db: Arc<Database>) -> () {
+async fn maybe_run_server(http_conf: HttpSettings, db: Arc<Database>, shutdown: watch::Receiver<bool>) -> () {
     if http_conf.enable {
         info!("Starting http server at {}", http_conf.bind_address);
         let cors = cors::CorsLayer::new()
             .allow_origin(cors::Any) // or use a specific origin: `AllowOrigin::exact("http://localhost:5173".parse().unwrap())`
             .allow_methods(cors::Any)
             .allow_headers(cors::Any);
-        serve(RequestState { db: Arc::clone(&db) }, http_conf.bind_address, None, Some(cors)).await
+        serve(RequestState { db: Arc::clone(&db) }, http_conf.bind_address, None, Some(cors), shutdown).await
     } else {
         ready(()).await
     }
 }
 
-async fn maybe_run_indexing(index_config: &IndexerSettings, scheduler: Scheduler<CBOR, Block>) -> () {
+async fn maybe_run_indexing(index_config: IndexerSettings, scheduler: Scheduler<CBOR, Block>, shutdown: watch::Receiver<bool>) -> () {
     if index_config.enable {
         info!("Starting indexing process");
-        scheduler.schedule(&index_config).await
+        scheduler.schedule(index_config, shutdown).await
     } else {
         ready(()).await
     }
@@ -60,8 +61,9 @@ async fn main() -> Result<()> {
     let block_persistence: Arc<dyn BlockPersistence<Block>> = Arc::new(CardanoBlockPersistence { db: Arc::clone(&db) });
     let scheduler: Scheduler<CBOR, Block> = Scheduler::new(block_provider, block_persistence);
 
-    let indexing_f = maybe_run_indexing(&app_config.indexer, scheduler);
-    let server_f = maybe_run_server(&app_config.http, Arc::clone(&db));
-    combine::futures(indexing_f, server_f).await;
+    let (shutdown_tx, shutdown_rx) = watch::channel(false);
+    let indexing_f = maybe_run_indexing(app_config.indexer, scheduler, shutdown_rx.clone());
+    let server_f = maybe_run_server(app_config.http, Arc::clone(&db), shutdown_rx.clone());
+    combine::futures(indexing_f, server_f, shutdown_tx).await;
     Ok(())
 }
